@@ -1,0 +1,90 @@
+
+{
+  "name": "PhishGuard Critical Threat Response",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "phishguard-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$node[\"Webhook Trigger\"].json[\"riskScore\"]}}",
+              "operation": "larger",
+              "value2": 80
+            }
+          ]
+        }
+      },
+      "name": "Filter Critical Threats",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "no-reply@phishguard-ai.security",
+        "toEmail": "security-ops@yourcompany.com",
+        "subject": "=[URGENT] PhishGuard AI: Critical Threat Detected (Score: {{$node[\"Webhook Trigger\"].json[\"riskScore\"]}})",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n<style>\n  body { font-family: 'Inter', Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 40px; }\n  .container { max-width: 600px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }\n  .header { background: #0f172a; padding: 24px; color: #10b981; border-bottom: 4px solid #ef4444; }\n  .content { padding: 32px; }\n  .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 16px; }\n  .badge-danger { background: #fee2e2; color: #991b1b; }\n  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 24px 0; }\n  .metric-card { background: #f1f5f9; padding: 16px; border-radius: 8px; }\n  .metric-label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }\n  .metric-value { font-size: 18px; font-weight: 800; margin-top: 4px; }\n  .footer { padding: 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; text-align: center; }\n  .btn { display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: 700; margin-top: 24px; }\n</style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1 style=\"margin:0; font-size: 20px;\">PhishGuard Security Alert</h1>\n    </div>\n    <div class=\"content\">\n      <div class=\"badge badge-danger\">Critical Threat Detected</div>\n      <h2 style=\"margin: 0 0 16px 0; font-size: 24px;\">Action Required: Malware/Phishing Signature Found</h2>\n      <p>The PhishGuard Neural Engine has identified a high-probability security incident. Immediate forensic investigation is recommended.</p>\n      \n      <div class=\"metric-grid\">\n        <div class=\"metric-card\">\n          <div class=\"metric-label\">Risk Score</div>\n          <div class=\"metric-value\">{{$node[\"Webhook Trigger\"].json[\"riskScore\"]}}/100</div>\n        </div>\n        <div class=\"metric-card\">\n          <div class=\"metric-label\">Threat Class</div>\n          <div class=\"metric-value\">{{$node[\"Webhook Trigger\"].json[\"threatLabel\"]}}</div>\n        </div>\n      </div>\n\n      <h4 style=\"margin-bottom: 8px;\">Forensic Explanation</h4>\n      <p style=\"background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px; font-style: italic;\">{{$node[\"Webhook Trigger\"].json[\"explanation\"]}}</p>\n\n      <h4 style=\"margin-bottom: 8px;\">Input Context Snippet</h4>\n      <code style=\"display: block; background: #f1f5f9; padding: 12px; border-radius: 4px; word-break: break-all;\">{{$node[\"Webhook Trigger\"].json[\"inputSnippet\"]}}</code>\n\n      <a href=\"https://phishguard-ai.vercel.app/admin/forensics/{{$node[\"Webhook Trigger\"].json[\"analysisId\"]}}\" class=\"btn\">Open Forensic Dashboard</a>\n    </div>\n    <div class=\"footer\">\n      Incident ID: {{$node[\"Webhook Trigger\"].json[\"analysisId\"]}}<br>\n      Timestamp: {{$node[\"Webhook Trigger\"].json[\"detectedAt\"]}}<br>\n      &copy; 2024 PhishGuard Security Platform. Restricted Access.\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "name": "Email Security Team",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [600, 200]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "=[PhishGuard Info] Threat Detected\nScore: {{$node[\"Webhook Trigger\"].json[\"riskScore\"]}}\nLabel: {{$node[\"Webhook Trigger\"].json[\"threatLabel\"]}}",
+        "additionalFields": {}
+      },
+      "name": "Standard Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [600, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Critical Threats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Critical Threats": {
+      "main": [
+        [
+          {
+            "node": "Email Security Team",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Standard Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

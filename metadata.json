@@ -1,0 +1,5 @@
+{
+  "name": "PhishGuard AI",
+  "description": "A production-ready cybersecurity platform utilizing advanced AI to detect phishing attempts, financial fraud indicators, and malicious URLs in real-time.",
+  "requestFramePermissions": []
+}
